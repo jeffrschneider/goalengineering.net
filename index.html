@@ -137,9 +137,20 @@ a:focus-visible, .figure-scroll:focus-visible {
 /* Hero */
 .hero {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 2rem 3rem;
   padding-block: 3.5rem 3rem;
 }
+.hero-text { display: grid; gap: 1.5rem; min-width: 0; }
+.hero-art { margin: 0; min-width: 0; }
+.hero-art svg { display: block; width: 100%; max-width: 440px; height: auto; margin-left: auto; }
+.h-frame { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
+.h-fence { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.h-hatch { fill: none; stroke: var(--ink); stroke-width: 7; stroke-dasharray: 1.5 9; opacity: 0.5; }
+.h-start { fill: var(--ink); }
+.h-bar { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.h-fill { fill: var(--goal); }
 .hero h1 {
   font-size: var(--step-3);
   font-weight: 700;
@@ -348,6 +359,8 @@ a:focus-visible, .figure-scroll:focus-visible {
   .sec { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .sec > .label { padding-top: 0; }
   .split, .groups, .stops { grid-template-columns: minmax(0, 1fr); }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .hero-art svg { max-width: 340px; margin-left: 0; }
   .figure-scroll { display: none; }
   .stack { display: grid; }
 }
@@ -379,8 +392,57 @@ a:focus-visible, .figure-scroll:focus-visible {
   </header>
 
   <section class="hero">
-    <h1>Goal engineering gives an AI agent <em>a goal it can check</em> and the limits it works within.</h1>
-    <p class="lede">An agent stays goal oriented when it knows what done looks like, which other goals pull against this one and what each is worth, which limits it must hold, how much effort it may spend, and how the goal breaks into smaller ones. This site sets out those parts and carries one example through all of them.</p>
+    <div class="hero-text">
+      <h1>Goal engineering gives an AI agent <em>a goal it can check</em> and the limits it works within.</h1>
+      <p class="lede">An agent stays goal oriented when it knows what done looks like, which other goals pull against this one and what each is worth, which limits it must hold, how much effort it may spend, and how the goal breaks into smaller ones. This site sets out those parts and carries one example through all of them.</p>
+    </div>
+    <figure class="hero-art">
+      <svg viewBox="0 0 440 440" role="img" aria-labelledby="hero-art-title">
+        <title id="hero-art-title">A route from start to goal on plotting paper. It passes two milestones inside a corridor of limits, a counter goal pulls it to one side, and an effort budget bar is partly spent.</title>
+        <defs>
+          <pattern id="herogrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path class="t-grid" d="M20 0H0V20"></path>
+          </pattern>
+          <path id="hero-route" d="M90 390C90 300 200 320 210 250S330 190 330 110"></path>
+        </defs>
+        <rect class="h-frame" x="0.5" y="0.5" width="439" height="439"></rect>
+        <rect x="1" y="1" width="438" height="438" fill="url(#herogrid)"></rect>
+
+        <!-- limits on both sides of the route -->
+        <use href="#hero-route" class="h-hatch" transform="translate(-54 0)"></use>
+        <use href="#hero-route" class="h-fence" transform="translate(-48 0)"></use>
+        <use href="#hero-route" class="h-hatch" transform="translate(54 0)"></use>
+        <use href="#hero-route" class="h-fence" transform="translate(48 0)"></use>
+        <text class="s-label" x="262" y="150" text-anchor="end">LIMIT</text>
+
+        <!-- the route -->
+        <use href="#hero-route" class="t-route"></use>
+        <circle class="h-start" cx="90" cy="392" r="6"></circle>
+        <text class="s-label" x="90" y="424" text-anchor="middle">START</text>
+
+        <!-- milestones -->
+        <path class="t-stone" d="M210 236L224 250L210 264L196 250Z"></path>
+        <path class="t-stone" d="M274 170L288 184L274 198L260 184Z"></path>
+        <text class="s-label" x="150" y="254" text-anchor="end">MILESTONE</text>
+
+        <!-- counter goal pulling the route sideways -->
+        <path class="t-spring" d="M146 312h14l5 -9l10 18l10 -18l10 18l10 -18l10 18l5 -9h20"></path>
+        <circle class="t-counter" cx="257" cy="312" r="7"></circle>
+        <text class="s-label is-counter" x="272" y="316">COUNTER GOAL</text>
+
+        <!-- the goal -->
+        <circle class="t-parent" cx="330" cy="90" r="40"></circle>
+        <circle class="t-ring" cx="330" cy="90" r="26"></circle>
+        <circle class="t-ring" cx="330" cy="90" r="13"></circle>
+        <circle class="t-dot" cx="330" cy="90" r="4.5"></circle>
+        <text class="s-label" x="330" y="36" text-anchor="middle">GOAL</text>
+
+        <!-- effort budget -->
+        <text class="s-label" x="250" y="372">EFFORT BUDGET</text>
+        <rect class="h-bar" x="250" y="382" width="150" height="12"></rect>
+        <rect class="h-fill" x="252" y="384" width="88" height="8"></rect>
+      </svg>
+    </figure>
   </section>
 
   <section class="sec" id="example" aria-labelledby="h-example">
