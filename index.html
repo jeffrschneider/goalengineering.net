@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Goal Engineering</title>
+<meta name="description" content="Goal engineering gives an AI agent a goal it can check and the limits it works within: counter goals and tradeoffs, constraints, an effort budget, sub-goals and milestones.">
+<link rel="canonical" href="https://goalengineering.net/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b6577">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Goal Engineering">
+<meta property="og:title" content="Goal Engineering">
+<meta property="og:description" content="Clear goals, counter goals, constraints and an effort budget for AI agents.">
+<meta property="og:url" content="https://goalengineering.net/">
+<meta property="og:image" content="https://goalengineering.net/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Goal Engineering, with a goal tree: a goal, three sub-goals, milestones, a counter goal and constraints on every branch.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Goal Engineering">
+<meta name="twitter:description" content="Clear goals, counter goals, constraints and an effort budget for AI agents.">
+<meta name="twitter:image" content="https://goalengineering.net/og.png">
+<script async src="/ga.js"></script>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&amp;display=swap">
+<style>
+:root {
+  /* Design plan. Subject: goals as engineered objects, drawn like a surveyor's plan.
+     Layout: a narrow label gutter on the left beside a 65ch reading column; the goal tree
+     breaks out to the full wrapper on plotting-grid paper and is the one bold element. */
+  --paper: #edf1f2;
+  --surface: #fbfcfc;
+  --ink: #14212b;
+  --muted: #546470;
+  --goal: #0b6577;
+  --counter: #b3264b;
+
+  --font-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-text: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --rule: color-mix(in srgb, var(--ink) 15%, transparent);
+  --grid: color-mix(in srgb, var(--ink) 7%, transparent);
+  --goal-tint: color-mix(in srgb, var(--goal) 13%, var(--surface));
+  --counter-tint: color-mix(in srgb, var(--counter) 10%, var(--surface));
+
+  --step--1: 0.8125rem;
+  --step-0: 1.125rem;
+  --step-1: 1.375rem;
+  --step-2: 1.875rem;
+  --step-3: clamp(2.25rem, 1.4rem + 4vw, 4.125rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f171c;
+    --surface: #162129;
+    --ink: #e2e9ec;
+    --muted: #93a3ad;
+    --goal: #5cc4d4;
+    --counter: #f2718f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f171c;
+  --surface: #162129;
+  --ink: #e2e9ec;
+  --muted: #93a3ad;
+  --goal: #5cc4d4;
+  --counter: #f2718f;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  font-optical-sizing: auto;
+}
+.wrap {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-stretch: 78%;
+  text-wrap: balance;
+  margin: 0;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+p { margin: 0; }
+a { color: var(--goal); text-underline-offset: 0.18em; }
+a:focus-visible, .figure-scroll:focus-visible {
+  outline: 2px solid var(--goal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Masthead */
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.masthead .site { font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink); }
+.masthead nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+.masthead nav a {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--muted);
+  text-decoration: none;
+}
+.masthead nav a:hover { color: var(--goal); }
+
+/* Hero */
+.hero {
+  display: grid;
+  gap: 1.5rem;
+  padding-block: 3.5rem 3rem;
+}
+.hero h1 {
+  font-size: var(--step-3);
+  font-weight: 700;
+  font-stretch: 70%;
+  max-width: 20ch;
+}
+.hero h1 em { font-style: normal; color: var(--goal); }
+.hero .lede { max-width: 62ch; color: var(--muted); font-size: 1.25rem; line-height: 1.55; }
+
+/* Sections */
+.sec {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 1.25rem 3rem;
+  padding-block: 3.5rem;
+  border-top: 1px solid var(--rule);
+}
+.sec > .label { padding-top: 0.6rem; }
+.sec-body { display: grid; gap: 1.5rem; min-width: 0; }
+.sec-body > h2 { font-size: var(--step-2); font-weight: 650; max-width: 26ch; }
+.prose { max-width: 65ch; display: grid; gap: 1rem; }
+.wide { grid-column: 1 / -1; min-width: 0; }
+
+/* The tree */
+.figure { margin: 0; display: grid; gap: 1rem; }
+.figure-scroll {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+}
+.figure-scroll svg { display: block; width: 100%; min-width: 840px; height: auto; }
+.stack {
+  display: none;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 1px solid var(--rule);
+}
+.st { display: grid; gap: 0.2rem; min-width: 0; padding: 0.75rem 0.9rem; background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; }
+.st strong { font-family: var(--font-display); font-stretch: 80%; font-weight: 650; font-size: 1.125rem; line-height: 1.2; }
+.st .d { font-family: var(--font-display); font-stretch: 90%; font-size: 0.9375rem; line-height: 1.4; color: var(--muted); }
+.st .d.ink { color: var(--ink); }
+.st.goal { background: var(--goal); border-color: var(--goal); }
+.st.goal .label, .st.goal strong, .st.goal .d { color: var(--surface); }
+.st.sub { border: 2px solid var(--goal); }
+.st.budget { background: var(--paper); border: 1.5px solid var(--ink); }
+.st.stone { background: transparent; border: 0; padding-block: 0.25rem; }
+.st.counter { background: var(--counter-tint); border: 2px solid var(--counter); }
+.st.counter .label { color: var(--counter); }
+.st.limit { border: 1.5px solid var(--ink); border-left-width: 4px; border-right-width: 4px; }
+.kids { display: grid; gap: 0.5rem; margin-top: 0.5rem; padding-left: 0.9rem; border-left: 1.5px solid var(--ink); }
+.dia { width: 10px; height: 10px; margin-right: 0.35rem; vertical-align: -1px; }
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-display);
+  font-stretch: 90%;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+.legend li { display: flex; align-items: center; gap: 0.5rem; }
+.legend svg { width: 26px; height: 18px; flex: none; }
+
+.t-grid { fill: none; stroke: var(--grid); stroke-width: 1; }
+.t-edge { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.t-route { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.t-string { fill: none; stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 3 4; }
+.t-parent { fill: var(--goal); }
+.t-ring { fill: none; stroke: var(--surface); stroke-width: 2; }
+.t-dot { fill: var(--surface); }
+.t-sub { fill: var(--surface); stroke: var(--goal); stroke-width: 2; }
+.t-leaf { fill: var(--surface); stroke: var(--ink); stroke-width: 1; }
+.t-stone { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.t-counter { fill: var(--counter-tint); stroke: var(--counter); stroke-width: 2; }
+.t-spring { fill: none; stroke: var(--counter); stroke-width: 2.5; stroke-linejoin: round; }
+.t-tag { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.t-hole { fill: var(--surface); stroke: var(--ink); stroke-width: 1.25; }
+.t-tick { fill: none; stroke: var(--rule); stroke-width: 1; }
+.t-limit { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.t-limit-bar { fill: none; stroke: var(--ink); stroke-width: 4; }
+
+.s-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; fill: var(--muted); }
+.s-label.on-goal { fill: var(--surface); opacity: 0.85; }
+.s-label.is-counter { fill: var(--counter); }
+.s-title { font-family: var(--font-display); font-stretch: 80%; font-weight: 650; font-size: 18px; fill: var(--ink); }
+.s-title.big { font-size: 22px; font-weight: 700; }
+.s-title.on-goal { fill: var(--surface); }
+.s-body { font-family: var(--font-display); font-stretch: 90%; font-size: 13.5px; fill: var(--muted); }
+.s-body.on-goal { fill: var(--surface); }
+.s-body.ink { fill: var(--ink); }
+.s-body.is-counter { fill: var(--counter); font-weight: 600; }
+.s-num { font-family: var(--font-mono); font-size: 13px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* Parts */
+.parts { margin: 0; display: grid; }
+.part {
+  display: grid;
+  grid-template-columns: 2.25rem 10rem minmax(0, 1fr);
+  gap: 0.5rem 1.25rem;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+.part:last-child { border-bottom: 1px solid var(--rule); }
+.part .glyph { width: 28px; height: 28px; margin-top: 0.15rem; }
+.part dt {
+  font-family: var(--font-display);
+  font-stretch: 80%;
+  font-weight: 650;
+  font-size: var(--step-1);
+  line-height: 1.2;
+}
+.part dd { margin: 0; display: grid; gap: 0.5rem; max-width: 62ch; min-width: 0; }
+.part .ex { font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.5; color: var(--muted); }
+.part .ex span { color: var(--goal); }
+
+.g-goal { fill: var(--goal); }
+.g-ring { fill: none; stroke: var(--surface); stroke-width: 1.5; }
+.g-counter { fill: none; stroke: var(--counter); stroke-width: 2.25; stroke-linejoin: round; }
+.g-line { fill: none; stroke: var(--ink); stroke-width: 1.75; }
+.g-route { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.g-stone { fill: var(--surface); stroke: var(--ink); stroke-width: 1.75; }
+.g-sub { fill: var(--surface); stroke: var(--goal); stroke-width: 1.75; }
+.g-tag { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+
+/* Spec sheet */
+.spec {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+}
+.spec-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  justify-content: space-between;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.spec-head .file { font-family: var(--font-mono); font-size: 0.875rem; color: var(--ink); }
+.spec-row {
+  display: grid;
+  grid-template-columns: 10.5rem minmax(0, 1fr) 7.5rem;
+  gap: 0.4rem 1.5rem;
+  align-items: baseline;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.spec-row:last-child { border-bottom: 0; }
+.spec-row dt { font-family: var(--font-mono); font-size: 0.875rem; color: var(--muted); }
+.spec-row dd { margin: 0; min-width: 0; }
+.spec-row .v { font-size: 1.0625rem; line-height: 1.5; }
+.spec-row .when { justify-self: end; }
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.pill.design { border: 1px solid var(--ink); color: var(--ink); }
+.pill.runtime { border: 1px solid var(--goal); background: var(--goal-tint); color: var(--goal); }
+
+/* Design time and runtime */
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2.5rem; }
+.split > div { display: grid; gap: 0.85rem; align-content: start; min-width: 0; }
+.split h3 { font-size: var(--step-1); font-weight: 650; }
+.split ul { margin: 0; padding: 0; list-style: none; display: grid; }
+.split li { padding-block: 0.6rem; border-top: 1px solid var(--rule); }
+.split li:last-child { border-bottom: 1px solid var(--rule); }
+.split .runtime li { border-color: color-mix(in srgb, var(--goal) 35%, transparent); }
+.rule-of-thumb {
+  max-width: 65ch;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--goal);
+  font-style: italic;
+}
+
+/* Groups */
+.groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem 2rem; }
+.stops { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2rem; }
+.groups > div, .stops > div { display: grid; gap: 0.5rem; align-content: start; padding-top: 1rem; border-top: 2px solid var(--ink); min-width: 0; }
+.groups h3, .stops h3 { font-size: 1.25rem; font-weight: 650; }
+.groups p, .stops p { color: var(--muted); }
+
+/* Footer */
+.foot {
+  padding-block: 2rem 3rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.foot a { color: var(--muted); }
+.foot a:hover { color: var(--goal); }
+
+@media (max-width: 860px) {
+  .sec { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .sec > .label { padding-top: 0; }
+  .split, .groups, .stops { grid-template-columns: minmax(0, 1fr); }
+  .figure-scroll { display: none; }
+  .stack { display: grid; }
+}
+@media (max-width: 620px) {
+  .part { grid-template-columns: 2.25rem minmax(0, 1fr); }
+  .part dd { grid-column: 1 / -1; }
+  .spec-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .spec-row .v { grid-column: 1 / -1; grid-row: 2; }
+  .hero { padding-block: 2.5rem 2rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .masthead nav a, .foot a { transition: color 150ms ease; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <span class="site">goalengineering.net</span>
+    <nav aria-label="On this page">
+      <a href="#example">The example</a>
+      <a href="#parts">The parts</a>
+      <a href="#spec">The spec</a>
+      <a href="#when">Design time and runtime</a>
+      <a href="#stops">Stopping and asking</a>
+      <a href="#groups">Groups of agents</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Goal engineering gives an AI agent <em>a goal it can check</em> and the limits it works within.</h1>
+    <p class="lede">An agent stays goal oriented when it knows what done looks like, which other goals pull against this one and what each is worth, which limits it must hold, how much effort it may spend, and how the goal breaks into smaller ones. This site sets out those parts and carries one example through all of them.</p>
+  </section>
+
+  <section class="sec" id="example" aria-labelledby="h-example">
+    <p class="label">The example</p>
+    <div class="sec-body">
+      <h2 id="h-example">One goal, drawn as a tree</h2>
+      <div class="prose">
+        <p>A company asks an agent to cut its monthly cloud bill by a fifth without slowing the checkout page. The bill runs at $84,000 a month, so the agent is done when the billing forecast for the month reads $67,200 or less.</p>
+      </div>
+    </div>
+
+    <figure class="figure wide">
+      <div class="figure-scroll" tabindex="0" role="region" aria-label="Goal tree for cutting the cloud bill">
+        <svg viewBox="0 0 1140 560" role="img" aria-labelledby="tree-title tree-desc">
+          <title id="tree-title">Goal tree for cutting the monthly cloud bill by 20 percent</title>
+          <desc id="tree-desc">The parent goal is to cut the monthly cloud bill by 20 percent, with an effort budget of 2 hours, 400,000 tokens, 15 dollars of compute and one approval call. It has three sub-goals. Remove idle resources targets 5,000 dollars a month and leads to deleting unattached disks and old snapshots. Archive cold storage targets 3,000 dollars a month and passes the milestone of tagging every bucket before moving untouched buckets to archive. Right-size compute targets 9,000 dollars a month with a floor of 7,000, passes the milestone of measuring 30 days of usage, and leads to resizing 40 oversized instances. The counter goal, keeping 30 percent spare compute for the holiday peak, pulls against right-size compute and is worth up to 2,000 dollars a month of savings. Constraints hold on every branch: checkout p95 latency under 800 milliseconds, nothing deleted without a person's approval, and only accounts marked for cost work touched.</desc>
+          <defs>
+            <pattern id="plotgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path class="t-grid" d="M20 0H0V20"></path>
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="1140" height="560" fill="url(#plotgrid)"></rect>
+
+          <!-- edges -->
+          <path class="t-edge" d="M460 128V170M160 170H760M160 170V196M460 170V196M760 170V196"></path>
+          <path class="t-edge" d="M160 276V400"></path>
+          <path class="t-route" d="M460 276V400"></path>
+          <path class="t-route" d="M760 276V400"></path>
+
+          <!-- parent goal -->
+          <rect class="t-parent" x="260" y="24" width="400" height="104" rx="3"></rect>
+          <text class="s-label on-goal" x="284" y="50">GOAL</text>
+          <text class="s-title big on-goal" x="284" y="82">Cut the monthly cloud bill by 20%</text>
+          <text class="s-body on-goal" x="284" y="108">Done when the forecast is $67,200 or less</text>
+          <circle class="t-ring" cx="622" cy="76" r="22"></circle>
+          <circle class="t-ring" cx="622" cy="76" r="13"></circle>
+          <circle class="t-dot" cx="622" cy="76" r="4.5"></circle>
+
+          <!-- effort budget tag -->
+          <path class="t-string" d="M660 76C704 76 728 92 786 90"></path>
+          <path class="t-tag" d="M792 22H1118V158H792L772 138V42Z"></path>
+          <circle class="t-hole" cx="788" cy="90" r="5"></circle>
+          <text class="s-label" x="808" y="46">EFFORT BUDGET</text>
+          <path class="t-tick" d="M808 82H1102M808 104H1102M808 126H1102"></path>
+          <text class="s-body" x="808" y="76">Time</text>
+          <text class="s-num" x="1102" y="76" text-anchor="end">2 hours</text>
+          <text class="s-body" x="808" y="98">Tokens</text>
+          <text class="s-num" x="1102" y="98" text-anchor="end">400,000</text>
+          <text class="s-body" x="808" y="120">Compute</text>
+          <text class="s-num" x="1102" y="120" text-anchor="end">$15</text>
+          <text class="s-body" x="808" y="142">Calls to people</text>
+          <text class="s-num" x="1102" y="142" text-anchor="end">1 approval</text>
+
+          <!-- sub-goals -->
+          <rect class="t-sub" x="40" y="196" width="240" height="80" rx="3"></rect>
+          <text class="s-label" x="58" y="218">SUB-GOAL</text>
+          <text class="s-title" x="58" y="243">Remove idle resources</text>
+          <text class="s-body" x="58" y="264">Target $5,000 a month</text>
+
+          <rect class="t-sub" x="340" y="196" width="240" height="80" rx="3"></rect>
+          <text class="s-label" x="358" y="218">SUB-GOAL</text>
+          <text class="s-title" x="358" y="243">Archive cold storage</text>
+          <text class="s-body" x="358" y="264">Target $3,000 a month</text>
+
+          <rect class="t-sub" x="640" y="196" width="240" height="80" rx="3"></rect>
+          <text class="s-label" x="658" y="218">SUB-GOAL</text>
+          <text class="s-title" x="658" y="243">Right-size compute</text>
+          <text class="s-body" x="658" y="264">Target $9,000, floor $7,000</text>
+
+          <!-- counter goal pulling against right-size compute -->
+          <path class="t-spring" d="M880 236h8l4 -8l8 16l8 -16l8 16l8 -16l8 16l4 -8h8"></path>
+          <rect class="t-counter" x="940" y="196" width="182" height="120" rx="3"></rect>
+          <text class="s-label is-counter" x="956" y="218">COUNTER GOAL</text>
+          <text class="s-title" x="956" y="243">Holiday headroom</text>
+          <text class="s-body ink" x="956" y="266">30% spare compute</text>
+          <text class="s-body is-counter" x="956" y="290">Worth $2,000 a month</text>
+
+          <!-- milestones -->
+          <path class="t-stone" d="M460 324L474 338L460 352L446 338Z"></path>
+          <text class="s-label" x="486" y="326">MILESTONE</text>
+          <text class="s-body" x="486" y="345">Every bucket tagged with</text>
+          <text class="s-body" x="486" y="363">owner and last access date</text>
+
+          <path class="t-stone" d="M760 324L774 338L760 352L746 338Z"></path>
+          <text class="s-label" x="786" y="326">MILESTONE</text>
+          <text class="s-body" x="786" y="345">Usage measured for 30</text>
+          <text class="s-body" x="786" y="363">days on every service</text>
+
+          <!-- leaf goals -->
+          <rect class="t-sub" x="40" y="400" width="240" height="72" rx="3"></rect>
+          <text class="s-label" x="58" y="421">SUB-GOAL</text>
+          <text class="s-body ink" x="58" y="442">Delete unattached disks and</text>
+          <text class="s-body ink" x="58" y="460">snapshots over 90 days old</text>
+
+          <rect class="t-sub" x="340" y="400" width="240" height="72" rx="3"></rect>
+          <text class="s-label" x="358" y="421">SUB-GOAL</text>
+          <text class="s-body ink" x="358" y="442">Move buckets untouched for</text>
+          <text class="s-body ink" x="358" y="460">180 days to archive storage</text>
+
+          <rect class="t-sub" x="640" y="400" width="240" height="72" rx="3"></rect>
+          <text class="s-label" x="658" y="421">SUB-GOAL</text>
+          <text class="s-body ink" x="658" y="442">Resize 40 oversized instances</text>
+          <text class="s-body ink" x="658" y="460">one service at a time</text>
+
+          <!-- constraints on every branch -->
+          <rect class="t-limit" x="40" y="496" width="1082" height="52"></rect>
+          <path class="t-limit-bar" d="M40 490V554M1122 490V554"></path>
+          <text class="s-label" x="60" y="516">CONSTRAINTS ON EVERY BRANCH</text>
+          <text class="s-body ink" x="60" y="537">Checkout p95 stays under 800 ms. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</text>
+        </svg>
+      </div>
+      <div class="stack" role="group" aria-label="Goal tree for cutting the cloud bill">
+        <div class="st goal">
+          <span class="label">Goal</span>
+          <strong>Cut the monthly cloud bill by 20%</strong>
+          <span class="d">Done when the forecast is $67,200 or less</span>
+        </div>
+        <div class="st budget">
+          <span class="label">Effort budget</span>
+          <span class="d ink">2 hours, 400,000 tokens, $15 of compute and 1 approval</span>
+        </div>
+        <div class="st sub">
+          <span class="label">Sub-goal</span>
+          <strong>Remove idle resources</strong>
+          <span class="d">Target $5,000 a month</span>
+          <div class="kids">
+            <div class="st sub"><span class="label">Sub-goal</span><span class="d ink">Delete unattached disks and snapshots over 90 days old</span></div>
+          </div>
+        </div>
+        <div class="st sub">
+          <span class="label">Sub-goal</span>
+          <strong>Archive cold storage</strong>
+          <span class="d">Target $3,000 a month</span>
+          <div class="kids">
+            <div class="st stone"><span class="label"><svg class="dia" viewBox="0 0 12 12" aria-hidden="true"><path class="g-stone" d="M6 1L11 6L6 11L1 6Z"></path></svg>Milestone</span><span class="d">Every bucket tagged with owner and last access date</span></div>
+            <div class="st sub"><span class="label">Sub-goal</span><span class="d ink">Move buckets untouched for 180 days to archive storage</span></div>
+          </div>
+        </div>
+        <div class="st sub">
+          <span class="label">Sub-goal</span>
+          <strong>Right-size compute</strong>
+          <span class="d">Target $9,000, floor $7,000</span>
+          <div class="kids">
+            <div class="st stone"><span class="label"><svg class="dia" viewBox="0 0 12 12" aria-hidden="true"><path class="g-stone" d="M6 1L11 6L6 11L1 6Z"></path></svg>Milestone</span><span class="d">Usage measured for 30 days on every service</span></div>
+            <div class="st sub"><span class="label">Sub-goal</span><span class="d ink">Resize 40 oversized instances one service at a time</span></div>
+          </div>
+        </div>
+        <div class="st counter">
+          <span class="label">Counter goal, pulling against right-size compute</span>
+          <strong>Holiday headroom</strong>
+          <span class="d ink">30% spare compute, worth $2,000 a month of savings</span>
+        </div>
+        <div class="st limit">
+          <span class="label">Constraints on every branch</span>
+          <span class="d ink">Checkout p95 stays under 800 ms. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</span>
+        </div>
+      </div>
+      <ul class="legend" aria-label="Key">
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="g-goal" x="1" y="2" width="24" height="14" rx="2"></rect></svg>Goal</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="g-sub" x="2" y="3" width="22" height="12" rx="2"></rect></svg>Sub-goal</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-route" d="M13 0V18"></path><path class="g-stone" d="M13 3L19 9L13 15L7 9Z"></path></svg>Milestone on the route</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-counter" d="M1 9h3l2 -5l4 10l4 -10l4 10l3 -5h4"></path></svg>Counter goal pulling against a branch</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="t-limit" x="3" y="5" width="20" height="8"></rect><path class="g-line" d="M3 2V16M23 2V16"></path></svg>Constraint on every branch</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-tag" d="M7 2H25V16H7L2 11V7Z"></path></svg>Effort budget</li>
+      </ul>
+    </figure>
+  </section>
+
+  <section class="sec" id="parts" aria-labelledby="h-parts">
+    <p class="label">The parts</p>
+    <div class="sec-body">
+      <h2 id="h-parts">Six parts make a goal an agent can work toward</h2>
+      <dl class="parts">
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><rect class="g-goal" x="2" y="5" width="24" height="18" rx="2"></rect><circle class="g-ring" cx="14" cy="14" r="5.5"></circle></svg>
+          <dt>Goal</dt>
+          <dd>
+            <p>A goal names a state the agent can check for itself, so it knows when it is done and can stop.</p>
+            <p class="ex"><span>In the example</span> The billing forecast for the month reads $67,200 or less.</p>
+          </dd>
+        </div>
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-counter" d="M1 14h4l2 -6l4 12l4 -12l4 12l3 -6h5"></path></svg>
+          <dt>Counter goal and tradeoff</dt>
+          <dd>
+            <p>A counter goal is something else you care about that this goal pulls against, and the tradeoff says which one wins and by how much.</p>
+            <p class="ex"><span>In the example</span> Keep 30% spare compute for the holiday peak. Headroom is worth up to $2,000 a month of savings, and past that the savings win.</p>
+          </dd>
+        </div>
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-line" d="M4 5V23M24 5V23M4 14H24"></path></svg>
+          <dt>Constraint</dt>
+          <dd>
+            <p>A constraint is a limit the agent holds whatever the gain, and breaking one counts as failure even when the goal is met.</p>
+            <p class="ex"><span>In the example</span> Checkout p95 stays under 800 ms, nothing is deleted without a person's approval, and only the accounts marked for cost work are touched.</p>
+          </dd>
+        </div>
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-tag" d="M9 6H26V22H9L3 16V12Z"></path><circle class="g-stone" cx="8" cy="14" r="1.6"></circle></svg>
+          <dt>Effort budget</dt>
+          <dd>
+            <p>Every goal carries one constraint on effort, which sets how much time, tokens, compute, money and calls to people the agent may spend before it stops and reports.</p>
+            <p class="ex"><span>In the example</span> 2 hours, 400,000 tokens, $15 of compute, and one approval call to a person.</p>
+          </dd>
+        </div>
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-line" d="M14 3V10M5 10H23M5 10V16M14 10V16M23 10V16"></path><rect class="g-sub" x="2" y="16" width="6" height="8" rx="1"></rect><rect class="g-sub" x="11" y="16" width="6" height="8" rx="1"></rect><rect class="g-sub" x="20" y="16" width="6" height="8" rx="1"></rect></svg>
+          <dt>Sub-goals</dt>
+          <dd>
+            <p>A goal can split into smaller goals, each checkable on its own, so the goals form a tree the agent works branch by branch.</p>
+            <p class="ex"><span>In the example</span> Three branches with targets that add up to $17,000 a month, against the $16,800 the parent needs.</p>
+          </dd>
+        </div>
+        <div class="part">
+          <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-route" d="M14 0V28"></path><path class="g-stone" d="M14 6L22 14L14 22L6 14Z"></path></svg>
+          <dt>Milestone</dt>
+          <dd>
+            <p>A milestone is a stepping stone the agent reaches on the way to a goal, and since it has no value of its own the agent should reach it well enough to move on and no further.</p>
+            <p class="ex"><span>In the example</span> Tagging buckets matters only because it shows which ones to archive, so the agent does not perfect the tags.</p>
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="sec" id="spec" aria-labelledby="h-spec">
+    <p class="label">The spec</p>
+    <div class="sec-body">
+      <h2 id="h-spec">The same goal, written as a spec</h2>
+      <div class="prose">
+        <p>Written out, the tree becomes a short spec the agent reads before it starts. Each line shows whether it was set when the agent was built or handed over with this job.</p>
+      </div>
+      <dl class="spec">
+        <div class="spec-head">
+          <span class="file">goal spec / cloud bill, November</span>
+          <span class="label">11 lines</span>
+        </div>
+        <div class="spec-row">
+          <dt>purpose</dt>
+          <dd class="v">Lower what the company pays for cloud services without making anything worse for customers.</dd>
+          <dd class="when"><span class="pill design">Design time</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>never trade away</dt>
+          <dd class="v">Checkout speed and customer data.</dd>
+          <dd class="when"><span class="pill design">Design time</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>hard limits</dt>
+          <dd class="v">Checkout p95 latency stays under 800 ms. Delete nothing without a person's approval, and touch only the accounts marked for cost work.</dd>
+          <dd class="when"><span class="pill design">Design time</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>goal</dt>
+          <dd class="v">Cut the November cloud bill by 20%, from $84,000 to $67,200 or less.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>done when</dt>
+          <dd class="v">The billing forecast for the month reads $67,200 or less.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>counter goal</dt>
+          <dd class="v">Keep 30% spare compute for the holiday peak.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>today's tradeoff</dt>
+          <dd class="v">Headroom is worth up to $2,000 a month of savings. Past that, the savings win. The agent reports any shortfall against the goal.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>sub-goals</dt>
+          <dd class="v">Remove idle resources ($5,000), archive cold storage ($3,000), and right-size compute ($9,000, floor $7,000).</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>milestones</dt>
+          <dd class="v">Usage measured for 30 days on every service, and every bucket tagged with an owner and a last access date. Neither is a result in itself.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>effort budget</dt>
+          <dd class="v">2 hours, 400,000 tokens, $15 of compute, and one approval call to the account owner. When it runs out, the agent keeps what is finished and reports what is left with its estimated saving.</dd>
+          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>stop and ask</dt>
+          <dd class="v">Stop when the check for done passes. Ask before any step a constraint reserves for a person. Say in the first report if the goal is out of reach.</dd>
+          <dd class="when"><span class="pill design">Design time</span></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="sec" id="when" aria-labelledby="h-when">
+    <p class="label">Design time and runtime</p>
+    <div class="sec-body">
+      <h2 id="h-when">Build in what every job shares, and hand over what each job changes</h2>
+      <div class="prose">
+        <p>Some goals are fixed when the agent is built. Others arrive with each job, so the same agent can take a new target, a new budget and a new priority without being rebuilt.</p>
+      </div>
+      <div class="split">
+        <div class="design">
+          <p><span class="pill design">Design time</span></p>
+          <h3>Built into the agent</h3>
+          <ul>
+            <li>Its purpose, which every job serves.</li>
+            <li>The hard limits it holds on every job.</li>
+            <li>What it must never trade away, whatever a job asks.</li>
+            <li>What it does when a budget runs out.</li>
+          </ul>
+        </div>
+        <div class="runtime">
+          <p><span class="pill runtime">Runtime</span></p>
+          <h3>Handed over with each job</h3>
+          <ul>
+            <li>This job's goal and the check for done.</li>
+            <li>This job's effort budget.</li>
+            <li>Today's priorities among the counter goals.</li>
+            <li>The sub-goals and milestones, when the person asking already knows them.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="rule-of-thumb">If some future job could rightly change a line, hand it over at runtime. If no job should ever change it, build it in. A runtime goal always passes through the design-time limits, so a job can ask for a bigger saving and no job can ask the agent to slow checkout.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="stops" aria-labelledby="h-stops">
+    <p class="label">Stopping and asking</p>
+    <div class="sec-body">
+      <h2 id="h-stops">Say when the agent stops, and when it asks a person</h2>
+      <div class="prose">
+        <p>A goal oriented agent also needs to know when to stop working toward the goal. The spec settles four cases before the work starts, so the agent never has to guess at them in the middle of a job.</p>
+      </div>
+      <div class="stops">
+        <div>
+          <h3>The goal is met</h3>
+          <p>The agent stops as soon as the check for done passes, even with budget left, and does not spend the rest chasing more.</p>
+        </div>
+        <div>
+          <h3>The budget runs out</h3>
+          <p>The agent keeps what is finished and reports what is left, along with what it would cost to finish.</p>
+        </div>
+        <div>
+          <h3>The goal is out of reach</h3>
+          <p>If the limits put the goal out of reach, the agent says so in its first report instead of spending the budget trying, as it would here if headroom cost the full $2,000 and left the branches at $15,000 against the $16,800 needed.</p>
+        </div>
+        <div>
+          <h3>A person must decide</h3>
+          <p>The agent asks before any step a constraint reserves for a person, and whenever two goals collide in a way the spec does not price.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="groups" aria-labelledby="h-groups">
+    <p class="label">Where it is heading</p>
+    <div class="sec-body">
+      <h2 id="h-groups">One agent today, groups of agents next</h2>
+      <div class="prose">
+        <p>Today the bulk of goal engineering is about a single agent working one goal tree within one budget. Everything on this page is written for that case, because that is where the field is.</p>
+        <p>Over time, more goals will be held by groups of agents. The six parts still describe the work, and each part will also need to say which agent holds it. Three new situations follow.</p>
+      </div>
+      <div class="groups">
+        <div>
+          <h3>Shared goals</h3>
+          <p>When several agents serve one goal, each needs to see what the others have already done toward it.</p>
+        </div>
+        <div>
+          <h3>Split goals</h3>
+          <p>When one goal is divided among agents, each needs its own share of the budget and its own check for done.</p>
+        </div>
+        <div>
+          <h3>Conflicting goals</h3>
+          <p>When two agents hold goals that pull against each other, the rule for which one wins has to sit above both of them.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="https://agentmesh.ai">Sponsored by AgentMesh</a>
+  </footer>
+</div>
+</body>
+</html>
