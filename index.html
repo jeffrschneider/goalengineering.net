@@ -144,13 +144,9 @@ a:focus-visible, .figure-scroll:focus-visible {
 }
 .hero-text { display: grid; gap: 1.5rem; min-width: 0; }
 .hero-art { margin: 0; min-width: 0; }
-.hero-art svg { display: block; width: 100%; max-width: 440px; height: auto; margin-left: auto; }
-.h-frame { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
-.h-fence { fill: none; stroke: var(--ink); stroke-width: 1.5; }
-.h-hatch { fill: none; stroke: var(--ink); stroke-width: 7; stroke-dasharray: 1.5 9; opacity: 0.5; }
-.h-start { fill: var(--ink); }
-.h-bar { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
-.h-fill { fill: var(--goal); }
+.hero-art svg { display: block; width: 100%; max-width: 440px; height: auto; margin-left: auto; border-radius: 4px; }
+/* The hero illustration keeps its own sunrise colours in both themes, like a printed picture. */
+.art-label { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; }
 .hero h1 {
   font-size: var(--step-3);
   font-weight: 700;
@@ -398,49 +394,44 @@ a:focus-visible, .figure-scroll:focus-visible {
     </div>
     <figure class="hero-art">
       <svg viewBox="0 0 440 440" role="img" aria-labelledby="hero-art-title">
-        <title id="hero-art-title">A route from start to goal on plotting paper. It passes two milestones inside a corridor of limits, a counter goal pulls it to one side, and an effort budget bar is partly spent.</title>
+        <title id="hero-art-title">A climb at sunrise. A trail passes two orange tents, the milestones, on its way to a red flag on the summit. A storm cloud is the counter goal, and a gauge shows the effort budget.</title>
         <defs>
-          <pattern id="herogrid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path class="t-grid" d="M20 0H0V20"></path>
-          </pattern>
-          <path id="hero-route" d="M90 390C90 300 200 320 210 250S330 190 330 110"></path>
+          <linearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6a9fd8"></stop><stop offset="0.6" stop-color="#f3b089"></stop><stop offset="1" stop-color="#fde3c3"></stop>
+          </linearGradient>
+          <linearGradient id="hero-peak" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5677bd"></stop><stop offset="1" stop-color="#2d4a86"></stop>
+          </linearGradient>
         </defs>
-        <rect class="h-frame" x="0.5" y="0.5" width="439" height="439"></rect>
-        <rect x="1" y="1" width="438" height="438" fill="url(#herogrid)"></rect>
-
-        <!-- limits on both sides of the route -->
-        <use href="#hero-route" class="h-hatch" transform="translate(-54 0)"></use>
-        <use href="#hero-route" class="h-fence" transform="translate(-48 0)"></use>
-        <use href="#hero-route" class="h-hatch" transform="translate(54 0)"></use>
-        <use href="#hero-route" class="h-fence" transform="translate(48 0)"></use>
-        <text class="s-label" x="262" y="150" text-anchor="end">LIMIT</text>
-
-        <!-- the route -->
-        <use href="#hero-route" class="t-route"></use>
-        <circle class="h-start" cx="90" cy="392" r="6"></circle>
-        <text class="s-label" x="90" y="424" text-anchor="middle">START</text>
-
-        <!-- milestones -->
-        <path class="t-stone" d="M210 236L224 250L210 264L196 250Z"></path>
-        <path class="t-stone" d="M274 170L288 184L274 198L260 184Z"></path>
-        <text class="s-label" x="150" y="254" text-anchor="end">MILESTONE</text>
-
-        <!-- counter goal pulling the route sideways -->
-        <path class="t-spring" d="M146 312h14l5 -9l10 18l10 -18l10 18l10 -18l10 18l5 -9h20"></path>
-        <circle class="t-counter" cx="257" cy="312" r="7"></circle>
-        <text class="s-label is-counter" x="272" y="316">COUNTER GOAL</text>
-
-        <!-- the goal -->
-        <circle class="t-parent" cx="330" cy="90" r="40"></circle>
-        <circle class="t-ring" cx="330" cy="90" r="26"></circle>
-        <circle class="t-ring" cx="330" cy="90" r="13"></circle>
-        <circle class="t-dot" cx="330" cy="90" r="4.5"></circle>
-        <text class="s-label" x="330" y="36" text-anchor="middle">GOAL</text>
-
-        <!-- effort budget -->
-        <text class="s-label" x="250" y="372">EFFORT BUDGET</text>
-        <rect class="h-bar" x="250" y="382" width="150" height="12"></rect>
-        <rect class="h-fill" x="252" y="384" width="88" height="8"></rect>
+        <rect width="440" height="440" fill="url(#hero-sky)"></rect>
+        <circle cx="365" cy="150" r="54" fill="#ffd25e" opacity="0.3"></circle>
+        <circle cx="365" cy="150" r="34" fill="#ffd25e"></circle>
+        <path d="M0 300L70 230L120 270L200 160L250 210L300 140L360 215L440 170V440H0Z" fill="#9a8fc7"></path>
+        <path d="M0 440L60 380L170 230L230 270L300 110L370 220L440 300V440Z" fill="url(#hero-peak)"></path>
+        <path d="M300 110L370 220L440 300V440H360L320 260Z" fill="#1f3566" opacity="0.45"></path>
+        <path d="M300 110L325 150L312 146L300 158L290 147L282 152Z" fill="#ffffff"></path>
+        <path d="M0 440V370Q90 340 190 368T440 350V440Z" fill="#7cbf72"></path>
+        <path d="M0 440V392Q70 360 150 388T300 392T440 372V440Z" fill="#4f9a5f"></path>
+        <polyline points="70,425 150,388 118,352 196,318 180,284 246,252 262,206 284,164 299,116" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="6 6"></polyline>
+        <path d="M184 326L196 306L208 326Z" fill="#f28c38" stroke="#7a3b10" stroke-width="1.5"></path>
+        <path d="M234 260L246 240L258 260Z" fill="#f28c38" stroke="#7a3b10" stroke-width="1.5"></path>
+        <text class="art-label" x="216" y="344" fill="#ffffff">MILESTONES</text>
+        <path d="M300 112V64" stroke="#1d2433" stroke-width="2.5"></path>
+        <path d="M300 64L334 75L300 86Z" fill="#e5484d"></path>
+        <text class="art-label" x="342" y="72" fill="#ffffff">GOAL</text>
+        <circle cx="70" cy="96" r="18" fill="#5c5f7a"></circle>
+        <circle cx="96" cy="86" r="24" fill="#5c5f7a"></circle>
+        <circle cx="124" cy="98" r="16" fill="#5c5f7a"></circle>
+        <rect x="56" y="98" width="80" height="16" fill="#5c5f7a"></rect>
+        <path d="M98 112L88 136L100 134L92 158L114 126L102 128L108 112Z" fill="#ffd25e"></path>
+        <path d="M152 92c20 6 40 4 60 -4M146 110c26 8 52 6 78 -4M160 128c18 6 36 5 52 -2" fill="none" stroke="#5c5f7a" stroke-width="2.5" stroke-linecap="round"></path>
+        <text class="art-label" x="40" y="182" fill="#1d2433">COUNTER GOAL</text>
+        <path d="M348 412A30 30 0 0 1 363 386" fill="none" stroke="#9be07a" stroke-width="7"></path>
+        <path d="M363 386A30 30 0 0 1 393 386" fill="none" stroke="#ffd25e" stroke-width="7"></path>
+        <path d="M393 386A30 30 0 0 1 408 412" fill="none" stroke="#ff6b5e" stroke-width="7"></path>
+        <path d="M378 412L374 388" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"></path>
+        <circle cx="378" cy="412" r="4" fill="#ffffff"></circle>
+        <text class="art-label" x="378" y="432" text-anchor="middle" fill="#ffffff">BUDGET</text>
       </svg>
     </figure>
   </section>
