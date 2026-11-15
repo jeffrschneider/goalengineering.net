@@ -326,6 +326,13 @@ a:focus-visible, .figure-scroll:focus-visible {
 .split li { padding-block: 0.6rem; border-top: 1px solid var(--rule); }
 .split li:last-child { border-bottom: 1px solid var(--rule); }
 .split .runtime li { border-color: color-mix(in srgb, var(--goal) 35%, transparent); }
+.pair-title { font-size: var(--step-1); font-weight: 650; }
+.pair-wrap { overflow-x: auto; max-width: 100%; }
+.pair { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 1.0625rem; }
+.pair th, .pair td { text-align: left; vertical-align: baseline; padding: 0.75rem 1.25rem 0.75rem 0; border-bottom: 1px solid var(--rule); }
+.pair th { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom-color: var(--ink); }
+.pair th:nth-child(2) { color: var(--counter); }
+.pair td:first-child { font-family: var(--font-display); font-stretch: 85%; font-weight: 650; }
 .rule-of-thumb {
   max-width: 65ch;
   padding-left: 1.25rem;
@@ -380,6 +387,7 @@ a:focus-visible, .figure-scroll:focus-visible {
     <nav aria-label="On this page">
       <a href="#example">The example</a>
       <a href="#parts">The parts</a>
+      <a href="#tradeoffs">Counter goals and constraints</a>
       <a href="#spec">The spec</a>
       <a href="#when">Design time and runtime</a>
       <a href="#stops">Stopping and asking</a>
@@ -441,7 +449,7 @@ a:focus-visible, .figure-scroll:focus-visible {
     <div class="sec-body">
       <h2 id="h-example">One goal, drawn as a tree</h2>
       <div class="prose">
-        <p>A company asks an agent to cut its monthly cloud bill by a fifth without slowing the checkout page. The bill runs at $84,000 a month, so the agent is done when the billing forecast for the month reads $67,200 or less.</p>
+        <p>A company asks an agent to cut its monthly cloud bill by a fifth without making the service less resilient or slower for users around the world. The bill runs at $84,000 a month, so the agent is done when the billing forecast for the month reads $67,200 or less.</p>
       </div>
     </div>
 
@@ -449,7 +457,7 @@ a:focus-visible, .figure-scroll:focus-visible {
       <div class="figure-scroll" tabindex="0" role="region" aria-label="Goal tree for cutting the cloud bill">
         <svg viewBox="0 0 1140 560" role="img" aria-labelledby="tree-title tree-desc">
           <title id="tree-title">Goal tree for cutting the monthly cloud bill by 20 percent</title>
-          <desc id="tree-desc">The parent goal is to cut the monthly cloud bill by 20 percent, with an effort budget of 2 hours, 400,000 tokens, 15 dollars of compute and one approval call. It has three sub-goals. Remove idle resources targets 5,000 dollars a month and leads to deleting unattached disks and old snapshots. Archive cold storage targets 3,000 dollars a month and passes the milestone of tagging every bucket before moving untouched buckets to archive. Right-size compute targets 9,000 dollars a month with a floor of 7,000, passes the milestone of measuring 30 days of usage, and leads to resizing 40 oversized instances. The counter goal, keeping 30 percent spare compute for the holiday peak, pulls against right-size compute and is worth up to 2,000 dollars a month of savings. Constraints hold on every branch: checkout p95 latency under 800 milliseconds, nothing deleted without a person's approval, and only accounts marked for cost work touched.</desc>
+          <desc id="tree-desc">The parent goal is to cut the monthly cloud bill by 20 percent, with an effort budget of 2 hours, 400,000 tokens, 15 dollars of compute and one approval call. It has three sub-goals. Remove idle resources targets 5,000 dollars a month and leads to deleting unattached disks and old snapshots. Archive cold storage targets 3,000 dollars a month and passes the milestone of tagging every bucket before moving untouched buckets to archive. Right-size compute targets 9,000 dollars a month, passes the milestone of measuring 30 days of usage, and leads to resizing 40 oversized instances. Two counter goals pull against the whole goal: resilience, keeping failover in two regions, and global latency, keeping p95 at 420 milliseconds or better. Constraints hold on every branch: global p95 never above 800 milliseconds, every service recovers within 15 minutes, data stays in its region, nothing is deleted without a person's approval, and only accounts marked for cost work are touched.</desc>
           <defs>
             <pattern id="plotgrid" width="20" height="20" patternUnits="userSpaceOnUse">
               <path class="t-grid" d="M20 0H0V20"></path>
@@ -501,15 +509,16 @@ a:focus-visible, .figure-scroll:focus-visible {
           <rect class="t-sub" x="640" y="196" width="240" height="80" rx="3"></rect>
           <text class="s-label" x="658" y="218">SUB-GOAL</text>
           <text class="s-title" x="658" y="243">Right-size compute</text>
-          <text class="s-body" x="658" y="264">Target $9,000, floor $7,000</text>
+          <text class="s-body" x="658" y="264">Target $9,000 a month</text>
 
-          <!-- counter goal pulling against right-size compute -->
-          <path class="t-spring" d="M880 236h8l4 -8l8 16l8 -16l8 16l8 -16l8 16l4 -8h8"></path>
-          <rect class="t-counter" x="940" y="196" width="182" height="120" rx="3"></rect>
-          <text class="s-label is-counter" x="956" y="218">COUNTER GOAL</text>
-          <text class="s-title" x="956" y="243">Holiday headroom</text>
-          <text class="s-body ink" x="956" y="266">30% spare compute</text>
-          <text class="s-body is-counter" x="956" y="290">Worth $2,000 a month</text>
+          <!-- counter goals pulling against the whole goal -->
+          <path class="t-spring" d="M214 76h6l3 -8l6 16l6 -16l6 16l6 -16l3 8h10"></path>
+          <rect class="t-counter" x="24" y="20" width="190" height="128" rx="3"></rect>
+          <text class="s-label is-counter" x="40" y="42">COUNTER GOALS</text>
+          <text class="s-title" x="40" y="66">Resilience</text>
+          <text class="s-body ink" x="40" y="86">Two-region failover</text>
+          <text class="s-title" x="40" y="114">Global latency</text>
+          <text class="s-body ink" x="40" y="134">p95 420 ms or better</text>
 
           <!-- milestones -->
           <path class="t-stone" d="M460 324L474 338L460 352L446 338Z"></path>
@@ -542,7 +551,7 @@ a:focus-visible, .figure-scroll:focus-visible {
           <rect class="t-limit" x="40" y="496" width="1082" height="52"></rect>
           <path class="t-limit-bar" d="M40 490V554M1122 490V554"></path>
           <text class="s-label" x="60" y="516">CONSTRAINTS ON EVERY BRANCH</text>
-          <text class="s-body ink" x="60" y="537">Checkout p95 stays under 800 ms. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</text>
+          <text class="s-body ink" x="60" y="537">Global p95 never above 800 ms. Every service recovers within 15 minutes. Data stays in its region. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</text>
         </svg>
       </div>
       <div class="stack" role="group" aria-label="Goal tree for cutting the cloud bill">
@@ -575,27 +584,29 @@ a:focus-visible, .figure-scroll:focus-visible {
         <div class="st sub">
           <span class="label">Sub-goal</span>
           <strong>Right-size compute</strong>
-          <span class="d">Target $9,000, floor $7,000</span>
+          <span class="d">Target $9,000 a month</span>
           <div class="kids">
             <div class="st stone"><span class="label"><svg class="dia" viewBox="0 0 12 12" aria-hidden="true"><path class="g-stone" d="M6 1L11 6L6 11L1 6Z"></path></svg>Milestone</span><span class="d">Usage measured for 30 days on every service</span></div>
             <div class="st sub"><span class="label">Sub-goal</span><span class="d ink">Resize 40 oversized instances one service at a time</span></div>
           </div>
         </div>
         <div class="st counter">
-          <span class="label">Counter goal, pulling against right-size compute</span>
-          <strong>Holiday headroom</strong>
-          <span class="d ink">30% spare compute, worth $2,000 a month of savings</span>
+          <span class="label">Counter goals, pulling against the goal</span>
+          <strong>Resilience</strong>
+          <span class="d ink">Keep failover in two regions</span>
+          <strong>Global latency</strong>
+          <span class="d ink">Keep p95 at 420 ms or better</span>
         </div>
         <div class="st limit">
           <span class="label">Constraints on every branch</span>
-          <span class="d ink">Checkout p95 stays under 800 ms. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</span>
+          <span class="d ink">Global p95 never above 800 ms. Every service recovers within 15 minutes. Data stays in its region. Nothing is deleted without a person's approval. Only accounts marked for cost work are touched.</span>
         </div>
       </div>
       <ul class="legend" aria-label="Key">
         <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="g-goal" x="1" y="2" width="24" height="14" rx="2"></rect></svg>Goal</li>
         <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="g-sub" x="2" y="3" width="22" height="12" rx="2"></rect></svg>Sub-goal</li>
         <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-route" d="M13 0V18"></path><path class="g-stone" d="M13 3L19 9L13 15L7 9Z"></path></svg>Milestone on the route</li>
-        <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-counter" d="M1 9h3l2 -5l4 10l4 -10l4 10l3 -5h4"></path></svg>Counter goal pulling against a branch</li>
+        <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-counter" d="M1 9h3l2 -5l4 10l4 -10l4 10l3 -5h4"></path></svg>Counter goal pulling against the goal</li>
         <li><svg viewBox="0 0 26 18" aria-hidden="true"><rect class="t-limit" x="3" y="5" width="20" height="8"></rect><path class="g-line" d="M3 2V16M23 2V16"></path></svg>Constraint on every branch</li>
         <li><svg viewBox="0 0 26 18" aria-hidden="true"><path class="g-tag" d="M7 2H25V16H7L2 11V7Z"></path></svg>Effort budget</li>
       </ul>
@@ -619,8 +630,8 @@ a:focus-visible, .figure-scroll:focus-visible {
           <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true"><path class="g-counter" d="M1 14h4l2 -6l4 12l4 -12l4 12l3 -6h5"></path></svg>
           <dt>Counter goal and tradeoff</dt>
           <dd>
-            <p>A counter goal is something else you care about that this goal pulls against, and the tradeoff says which one wins and by how much.</p>
-            <p class="ex"><span>In the example</span> Keep 30% spare compute for the holiday peak. Headroom is worth up to $2,000 a month of savings, and past that the savings win.</p>
+            <p>A counter goal is something else you want that the main goal naturally pushes down, and the tradeoff says what it is worth when the two collide.</p>
+            <p class="ex"><span>In the example</span> Keep failover in two regions, worth up to $2,500 a month of savings, and keep global p95 at 420 ms or better, where every 10 ms added must save at least $1,000 a month.</p>
           </dd>
         </div>
         <div class="part">
@@ -628,7 +639,7 @@ a:focus-visible, .figure-scroll:focus-visible {
           <dt>Constraint</dt>
           <dd>
             <p>A constraint is a limit the agent holds whatever the gain, and breaking one counts as failure even when the goal is met.</p>
-            <p class="ex"><span>In the example</span> Checkout p95 stays under 800 ms, nothing is deleted without a person's approval, and only the accounts marked for cost work are touched.</p>
+            <p class="ex"><span>In the example</span> Global p95 never goes above 800 ms, every service recovers within 15 minutes, data stays in its region, and nothing is deleted without a person's approval.</p>
           </dd>
         </div>
         <div class="part">
@@ -659,6 +670,59 @@ a:focus-visible, .figure-scroll:focus-visible {
     </div>
   </section>
 
+  <section class="sec" id="tradeoffs" aria-labelledby="h-tradeoffs">
+    <p class="label">Counter goals and constraints</p>
+    <div class="sec-body">
+      <h2 id="h-tradeoffs">Counter goals bend. Constraints hold.</h2>
+      <div class="prose">
+        <p>Most goals have a cheap way to be met that wrecks something else. The quickest way to cut a cloud bill is to shut down the second region and the spare capacity, and those are exactly what keep the service up and fast. An agent told only to cut cost has no reason to avoid that path. Counter goals and constraints are how the spec closes it.</p>
+      </div>
+      <div class="split">
+        <div>
+          <h3>Counter goals</h3>
+          <div class="prose">
+            <p>A counter goal is something you also want that the main goal naturally pushes down. Cutting cloud cost pulls against resilience, because redundancy costs money. It also pulls against global response time, because serving users from regions near them costs more than serving everyone from one place.</p>
+            <p>A counter goal does not have to be held exactly where it is. The agent may give some of it up when the saving is worth it, or improve it when that is cheap, so the spec has to say what it is worth.</p>
+          </div>
+          <ul>
+            <li>Name the measure and its value today, such as p95 at 420 ms.</li>
+            <li>Give the direction: keep, improve, or same or better.</li>
+            <li>Price it against the goal, as a rate or a rank.</li>
+            <li>Ask the agent to report every trade it makes.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Constraints</h3>
+          <div class="prose">
+            <p>A constraint is a line the agent does not cross at any price. It is never weighed against the goal, and an action that would break one is not taken, even when it would meet the goal.</p>
+            <p>Constraints cover permissions, scope, law, safety thresholds and the effort budget. Each one has to be checkable before the agent acts, so the agent stops short instead of finding out afterward.</p>
+          </div>
+          <ul>
+            <li>Write it as a yes-or-no check.</li>
+            <li>Say when it is checked: before an action, after it, or both.</li>
+            <li>Say what the agent does instead: skip the step, or ask a person.</li>
+            <li>Keep the list short, because every constraint narrows the routes to the goal.</li>
+          </ul>
+        </div>
+      </div>
+      <h3 class="pair-title">One measure can be both</h3>
+      <div class="prose">
+        <p>A counter goal says which way a measure should move. A constraint sets the line it must never cross. Using both on the same measure gives the agent room to trade without letting it trade too far.</p>
+      </div>
+      <div class="pair-wrap">
+        <table class="pair">
+          <thead>
+            <tr><th scope="col">Measure</th><th scope="col">Counter goal</th><th scope="col">Constraint</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Global response time</td><td>p95 stays at 420 ms or better</td><td>p95 never above 800 ms</td></tr>
+            <tr><td>Resilience</td><td>Failover stays in two regions</td><td>Every service recovers within 15 minutes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <section class="sec" id="spec" aria-labelledby="h-spec">
     <p class="label">The spec</p>
     <div class="sec-body">
@@ -678,12 +742,12 @@ a:focus-visible, .figure-scroll:focus-visible {
         </div>
         <div class="spec-row">
           <dt>never trade away</dt>
-          <dd class="v">Checkout speed and customer data.</dd>
+          <dd class="v">Customer data, and service during an outage.</dd>
           <dd class="when"><span class="pill design">Design time</span></dd>
         </div>
         <div class="spec-row">
           <dt>hard limits</dt>
-          <dd class="v">Checkout p95 latency stays under 800 ms. Delete nothing without a person's approval, and touch only the accounts marked for cost work.</dd>
+          <dd class="v">Global p95 never above 800 ms. Every service recovers within 15 minutes. Data stays in the region where it was collected. Delete nothing without a person's approval, and touch only the accounts marked for cost work.</dd>
           <dd class="when"><span class="pill design">Design time</span></dd>
         </div>
         <div class="spec-row">
@@ -697,18 +761,18 @@ a:focus-visible, .figure-scroll:focus-visible {
           <dd class="when"><span class="pill runtime">Runtime</span></dd>
         </div>
         <div class="spec-row">
-          <dt>counter goal</dt>
-          <dd class="v">Keep 30% spare compute for the holiday peak.</dd>
-          <dd class="when"><span class="pill runtime">Runtime</span></dd>
+          <dt>counter goals</dt>
+          <dd class="v">Resilience: keep or improve failover in two regions, which takes under 5 minutes today. Global latency: p95 the same as today's 420 ms or better.</dd>
+          <dd class="when"><span class="pill design">Design time</span></dd>
         </div>
         <div class="spec-row">
           <dt>today's tradeoff</dt>
-          <dd class="v">Headroom is worth up to $2,000 a month of savings. Past that, the savings win. The agent reports any shortfall against the goal.</dd>
+          <dd class="v">Two-region failover is worth up to $2,500 a month of savings. Every 10 ms added to p95 must save at least $1,000 a month. The agent reports every trade it makes and any shortfall against the goal.</dd>
           <dd class="when"><span class="pill runtime">Runtime</span></dd>
         </div>
         <div class="spec-row">
           <dt>sub-goals</dt>
-          <dd class="v">Remove idle resources ($5,000), archive cold storage ($3,000), and right-size compute ($9,000, floor $7,000).</dd>
+          <dd class="v">Remove idle resources ($5,000), archive cold storage ($3,000), and right-size compute ($9,000).</dd>
           <dd class="when"><span class="pill runtime">Runtime</span></dd>
         </div>
         <div class="spec-row">
@@ -759,7 +823,7 @@ a:focus-visible, .figure-scroll:focus-visible {
           </ul>
         </div>
       </div>
-      <p class="rule-of-thumb">If some future job could rightly change a line, hand it over at runtime. If no job should ever change it, build it in. A runtime goal always passes through the design-time limits, so a job can ask for a bigger saving and no job can ask the agent to slow checkout.</p>
+      <p class="rule-of-thumb">If some future job could rightly change a line, hand it over at runtime. If no job should ever change it, build it in. A runtime goal always passes through the design-time limits, so a job can ask for a bigger saving and no job can let recovery take longer than 15 minutes.</p>
     </div>
   </section>
 
@@ -781,7 +845,7 @@ a:focus-visible, .figure-scroll:focus-visible {
         </div>
         <div>
           <h3>The goal is out of reach</h3>
-          <p>If the limits put the goal out of reach, the agent says so in its first report instead of spending the budget trying, as it would here if headroom cost the full $2,000 and left the branches at $15,000 against the $16,800 needed.</p>
+          <p>If the limits put the goal out of reach, the agent says so in its first report instead of spending the budget trying, as it would here if keeping failover in two regions cost the full $2,500 and left the branches at $14,500 against the $16,800 needed.</p>
         </div>
         <div>
           <h3>A person must decide</h3>
